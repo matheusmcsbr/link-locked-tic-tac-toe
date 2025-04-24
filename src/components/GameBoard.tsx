@@ -1,6 +1,5 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { BoardState, GameState, Player } from "@/types/game";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -11,7 +10,6 @@ interface GameBoardProps {
 
 const GameBoard = ({ gameState, onMove }: GameBoardProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (gameState.status === "won") {

@@ -17,12 +17,14 @@ import {
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
+  const [isFirstPlayer, setIsFirstPlayer] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const gameData = searchParams.get("game");
     if (gameData) {
       setGameState(decodeGameState(gameData));
+      setIsFirstPlayer(false);
     }
   }, []);
 
@@ -47,12 +49,30 @@ const Index = () => {
   };
 
   const handleNewGame = () => {
+    if (!isFirstPlayer) {
+      toast({
+        title: "Not Allowed",
+        description: "Only the first player can start a new game.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const newGameState = getInitialGameState();
     setGameState(newGameState);
     setSearchParams({ game: encodeGameState(newGameState) });
   };
 
   const handleShare = () => {
+    if (!isFirstPlayer) {
+      toast({
+        title: "Not Allowed",
+        description: "Only the first player can share the game.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     toast({
@@ -67,8 +87,12 @@ const Index = () => {
         <h1 className="text-3xl font-bold text-center text-gray-800">Tic Tac Toe</h1>
         <GameBoard gameState={gameState} onMove={handleMove} />
         <div className="flex justify-center gap-4">
-          <Button onClick={handleNewGame}>New Game</Button>
-          <Button onClick={handleShare} variant="outline">Share Game</Button>
+          {isFirstPlayer && (
+            <>
+              <Button onClick={handleNewGame}>New Game</Button>
+              <Button onClick={handleShare} variant="outline">Share Game</Button>
+            </>
+          )}
         </div>
       </div>
     </div>
