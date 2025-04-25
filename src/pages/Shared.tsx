@@ -82,6 +82,7 @@ const Shared = () => {
     const params = new URLSearchParams(searchParams);
     params.set("game", encodeGameState(newGameState));
     window.history.replaceState({}, "", `?${params.toString()}`);
+    lastGameData.current = encodeGameState(newGameState);
   };
 
   return (
