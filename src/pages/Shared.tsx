@@ -13,7 +13,7 @@ import {
 } from "@/utils/gameUtils";
 
 const Shared = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
   const { toast } = useToast();
   const lastGameData = useRef<string | null>(null);
@@ -85,9 +85,10 @@ const Shared = () => {
     hasMadeMove.current = true;
     
     setGameState(newGameState);
-    const params = new URLSearchParams(searchParams);
-    params.set("game", encodeGameState(newGameState));
-    window.history.replaceState({}, "", `?${params.toString()}`);
+    
+    // Use setSearchParams instead of window.history.replaceState to trigger URL update
+    // This will allow Player 1's polling to detect the change
+    setSearchParams({ game: encodeGameState(newGameState), gameNumber });
     lastGameData.current = encodeGameState(newGameState);
   };
 
