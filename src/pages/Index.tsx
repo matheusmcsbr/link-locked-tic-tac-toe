@@ -53,7 +53,10 @@ const Index = () => {
     }
 
     pollingInterval.current = window.setInterval(() => {
-      const currentGameData = searchParams.get("game");
+      // Force refresh parameters from URL to detect changes
+      const currentParams = new URLSearchParams(window.location.search);
+      const currentGameData = currentParams.get("game");
+      
       if (currentGameData && currentGameData !== lastGameData.current) {
         try {
           const decodedState = decodeGameState(currentGameData);
