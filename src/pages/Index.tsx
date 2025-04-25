@@ -30,13 +30,11 @@ const Index = () => {
         setIsFirstPlayer(false);
       } catch (error) {
         console.error("Failed to decode game state:", error);
-        // If there's an error decoding, start a fresh game
         const newState = getInitialGameState();
         setGameState(newState);
         setSearchParams({ game: encodeGameState(newState) });
       }
     } else {
-      // No game in URL, initialize as first player with a fresh game
       const newState = getInitialGameState();
       setGameState(newState);
       setSearchParams({ game: encodeGameState(newState) });
@@ -44,6 +42,19 @@ const Index = () => {
   }, []);
 
   const handleMove = (index: number) => {
+    // Check if it's the player's turn
+    const isPlayerTurn = (isFirstPlayer && gameState.currentPlayer === "X") || 
+                        (!isFirstPlayer && gameState.currentPlayer === "O");
+
+    if (!isPlayerTurn) {
+      toast({
+        title: "Not your turn",
+        description: "Please wait for the other player to make their move.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (gameState.board[index] || gameState.status !== "playing") return;
 
     const newBoard = [...gameState.board];
