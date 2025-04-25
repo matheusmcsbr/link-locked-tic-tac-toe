@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameState } from "@/types/game";
@@ -23,7 +22,6 @@ const Index = () => {
   const lastGameData = useRef<string | null>(null);
   const pollingInterval = useRef<number | null>(null);
 
-  // Initial game state setup
   useEffect(() => {
     const gameData = searchParams.get("game");
     const urlGameNumber = searchParams.get("gameNumber");
@@ -55,7 +53,6 @@ const Index = () => {
       lastGameData.current = encodeGameState(newState);
     }
 
-    // Set up polling to check for URL changes
     pollingInterval.current = window.setInterval(() => {
       const currentGameData = searchParams.get("game");
       if (currentGameData && currentGameData !== lastGameData.current) {
@@ -67,7 +64,7 @@ const Index = () => {
           console.error("Failed to decode game state during polling:", error);
         }
       }
-    }, 1000); // Check every second
+    }, 1000);
 
     return () => {
       if (pollingInterval.current) {
@@ -76,7 +73,6 @@ const Index = () => {
     };
   }, []);
 
-  // Function to handle URL parameter changes
   useEffect(() => {
     const handleURLChange = () => {
       const currentGameData = searchParams.get("game");
@@ -91,7 +87,6 @@ const Index = () => {
       }
     };
 
-    // Listen for URL changes
     window.addEventListener('popstate', handleURLChange);
     return () => {
       window.removeEventListener('popstate', handleURLChange);
@@ -133,15 +128,6 @@ const Index = () => {
   };
 
   const handleNewGame = () => {
-    if (!isFirstPlayer) {
-      toast({
-        title: "Not Allowed",
-        description: "Only the first player can start a new game.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     const newGameNumber = generateGameId();
     const newGameState = getInitialGameState();
     setGameState(newGameState);
@@ -160,15 +146,6 @@ const Index = () => {
   };
 
   const handleShare = () => {
-    if (!isFirstPlayer) {
-      toast({
-        title: "Not Allowed",
-        description: "Only the first player can share the game.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     toast({
@@ -188,10 +165,12 @@ const Index = () => {
           </p>
         </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
-        <div className="flex justify-center gap-4">
-          <Button onClick={handleNewGame}>New Game</Button>
-          <Button onClick={handleShare} variant="outline">Share Game</Button>
-        </div>
+        {isFirstPlayer && (
+          <div className="flex justify-center gap-4">
+            <Button onClick={handleNewGame}>New Game</Button>
+            <Button onClick={handleShare} variant="outline">Share Game</Button>
+          </div>
+        )}
       </div>
     </div>
   );
