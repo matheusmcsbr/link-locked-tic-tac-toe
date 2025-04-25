@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameState } from "@/types/game";
 import GameBoard from "@/components/GameBoard";
@@ -18,7 +19,10 @@ const Index = () => {
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
   const [isFirstPlayer, setIsFirstPlayer] = useState(true);
   const { toast } = useToast();
+  const lastGameData = useRef<string | null>(null);
+  const pollingInterval = useRef<number | null>(null);
 
+  // Initial game state setup
   useEffect(() => {
     const gameData = searchParams.get("game");
     if (gameData) {
@@ -26,18 +30,63 @@ const Index = () => {
         const decodedState = decodeGameState(gameData);
         setGameState(decodedState);
         setIsFirstPlayer(false);
+        lastGameData.current = gameData;
       } catch (error) {
         console.error("Failed to decode game state:", error);
         const newState = getInitialGameState();
         setGameState(newState);
         setSearchParams({ game: encodeGameState(newState) });
+        lastGameData.current = encodeGameState(newState);
       }
     } else {
       const newState = getInitialGameState();
       setGameState(newState);
       setSearchParams({ game: encodeGameState(newState) });
+      lastGameData.current = encodeGameState(newState);
     }
+
+    // Set up polling to check for URL changes
+    pollingInterval.current = window.setInterval(() => {
+      const currentGameData = searchParams.get("game");
+      if (currentGameData && currentGameData !== lastGameData.current) {
+        try {
+          const decodedState = decodeGameState(currentGameData);
+          setGameState(decodedState);
+          lastGameData.current = currentGameData;
+        } catch (error) {
+          console.error("Failed to decode game state during polling:", error);
+        }
+      }
+    }, 1000); // Check every second
+
+    return () => {
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+      }
+    };
   }, []);
+
+  // Function to handle URL parameter changes
+  useEffect(() => {
+    const handleURLChange = () => {
+      const currentGameData = searchParams.get("game");
+      if (currentGameData && currentGameData !== lastGameData.current) {
+        try {
+          const decodedState = decodeGameState(currentGameData);
+          setGameState(decodedState);
+          lastGameData.current = currentGameData;
+        } catch (error) {
+          console.error("Failed to decode game state from URL change:", error);
+        }
+      }
+    };
+
+    // Listen for URL changes
+    window.addEventListener('popstate', handleURLChange);
+    return () => {
+      window.removeEventListener('popstate', handleURLChange);
+    };
+  }, [searchParams]);
 
   const handleMove = (index: number) => {
     const isPlayerTurn = (isFirstPlayer && gameState.currentPlayer === "X") || 
@@ -68,7 +117,9 @@ const Index = () => {
     };
 
     setGameState(newGameState);
-    setSearchParams({ game: encodeGameState(newGameState) });
+    const encodedState = encodeGameState(newGameState);
+    setSearchParams({ game: encodedState });
+    lastGameData.current = encodedState;
   };
 
   const handleNewGame = () => {
@@ -83,9 +134,11 @@ const Index = () => {
     
     const newGameState = getInitialGameState();
     setGameState(newGameState);
+    const encodedState = encodeGameState(newGameState);
     const newParams = new URLSearchParams();
-    newParams.set('game', encodeGameState(newGameState));
+    newParams.set('game', encodedState);
     setSearchParams(newParams);
+    lastGameData.current = encodedState;
 
     toast({
       title: "New Game Started",
