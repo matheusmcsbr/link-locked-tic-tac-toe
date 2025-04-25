@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameState } from "@/types/game";
@@ -43,6 +44,7 @@ const Index = () => {
         setGameNumber(newGameNumber);
         setSearchParams({ game: encodeGameState(newState), gameNumber: newGameNumber });
         lastGameData.current = encodeGameState(newState);
+        setIsFirstPlayer(true);
       }
     } else {
       const newGameNumber = generateGameId();
@@ -51,6 +53,7 @@ const Index = () => {
       setGameNumber(newGameNumber);
       setSearchParams({ game: encodeGameState(newState), gameNumber: newGameNumber });
       lastGameData.current = encodeGameState(newState);
+      setIsFirstPlayer(true);
     }
 
     pollingInterval.current = window.setInterval(() => {
@@ -71,7 +74,7 @@ const Index = () => {
         clearInterval(pollingInterval.current);
       }
     };
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const handleURLChange = () => {
@@ -162,6 +165,14 @@ const Index = () => {
           <p className="text-gray-600">Game #{gameNumber}</p>
           <p className="text-purple-600 font-medium">
             You are Player {isFirstPlayer ? "1 (X)" : "2 (O)"}
+          </p>
+          <p className="text-gray-700">
+            {gameState.status === "playing" ? 
+              `Current Turn: ${gameState.currentPlayer === "X" ? "Player 1 (X)" : "Player 2 (O)"}` :
+              gameState.status === "won" ? 
+                `Winner: Player ${gameState.winner === "X" ? "1 (X)" : "2 (O)"}` : 
+                "Game Draw!"
+            }
           </p>
         </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
