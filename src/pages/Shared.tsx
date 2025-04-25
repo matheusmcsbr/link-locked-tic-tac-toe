@@ -9,6 +9,7 @@ import {
   checkWinner,
   checkDraw,
   decodeGameState,
+  encodeGameState,
 } from "@/utils/gameUtils";
 
 const Shared = () => {
