@@ -19,6 +19,7 @@ const Shared = () => {
   const lastGameData = useRef<string | null>(null);
   const pollingInterval = useRef<number | null>(null);
   const gameNumber = searchParams.get("gameNumber") || "";
+  const hasMadeMove = useRef<boolean>(false);
 
   useEffect(() => {
     const gameData = searchParams.get("game");
@@ -35,7 +36,7 @@ const Shared = () => {
 
     pollingInterval.current = window.setInterval(() => {
       const currentGameData = searchParams.get("game");
-      if (currentGameData && currentGameData !== lastGameData.current) {
+      if (currentGameData && currentGameData !== lastGameData.current && !hasMadeMove.current) {
         try {
           const decodedState = decodeGameState(currentGameData);
           setGameState(decodedState);
@@ -44,6 +45,8 @@ const Shared = () => {
           console.error("Failed to decode game state during polling:", error);
         }
       }
+      // Reset the move flag after checking
+      hasMadeMove.current = false;
     }, 1000);
 
     return () => {
@@ -78,6 +81,9 @@ const Shared = () => {
       winner: winner,
     };
 
+    // Set flag to indicate we've just made a move
+    hasMadeMove.current = true;
+    
     setGameState(newGameState);
     const params = new URLSearchParams(searchParams);
     params.set("game", encodeGameState(newGameState));
