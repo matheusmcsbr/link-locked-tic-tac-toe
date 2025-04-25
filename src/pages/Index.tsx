@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameState } from "@/types/game";
@@ -20,7 +19,6 @@ const Index = () => {
   const [isFirstPlayer, setIsFirstPlayer] = useState(true);
   const { toast } = useToast();
 
-  // Load game state from URL if available
   useEffect(() => {
     const gameData = searchParams.get("game");
     if (gameData) {
@@ -42,7 +40,6 @@ const Index = () => {
   }, []);
 
   const handleMove = (index: number) => {
-    // Check if it's the player's turn
     const isPlayerTurn = (isFirstPlayer && gameState.currentPlayer === "X") || 
                         (!isFirstPlayer && gameState.currentPlayer === "O");
 
@@ -86,7 +83,14 @@ const Index = () => {
     
     const newGameState = getInitialGameState();
     setGameState(newGameState);
-    setSearchParams({ game: encodeGameState(newGameState) });
+    const newParams = new URLSearchParams();
+    newParams.set('game', encodeGameState(newGameState));
+    setSearchParams(newParams);
+
+    toast({
+      title: "New Game Started",
+      description: "Share the new game link with your opponent!",
+    });
   };
 
   const handleShare = () => {
