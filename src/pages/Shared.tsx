@@ -3,53 +3,33 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GameState } from "@/types/game";
 import GameBoard from "@/components/GameBoard";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   getInitialGameState,
   checkWinner,
   checkDraw,
-  generateGameId,
-  encodeGameState,
   decodeGameState,
 } from "@/utils/gameUtils";
 
-const Index = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+const Shared = () => {
+  const [searchParams] = useSearchParams();
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
-  const [gameNumber, setGameNumber] = useState<string>(generateGameId());
   const { toast } = useToast();
   const lastGameData = useRef<string | null>(null);
   const pollingInterval = useRef<number | null>(null);
+  const gameNumber = searchParams.get("gameNumber") || "";
 
   useEffect(() => {
     const gameData = searchParams.get("game");
-    const urlGameNumber = searchParams.get("gameNumber");
     
     if (gameData) {
       try {
         const decodedState = decodeGameState(gameData);
         setGameState(decodedState);
         lastGameData.current = gameData;
-        if (urlGameNumber) {
-          setGameNumber(urlGameNumber);
-        }
       } catch (error) {
         console.error("Failed to decode game state:", error);
-        const newGameNumber = generateGameId();
-        const newState = getInitialGameState();
-        setGameState(newState);
-        setGameNumber(newGameNumber);
-        setSearchParams({ game: encodeGameState(newState), gameNumber: newGameNumber });
-        lastGameData.current = encodeGameState(newState);
       }
-    } else {
-      const newGameNumber = generateGameId();
-      const newState = getInitialGameState();
-      setGameState(newState);
-      setGameNumber(newGameNumber);
-      setSearchParams({ game: encodeGameState(newState), gameNumber: newGameNumber });
-      lastGameData.current = encodeGameState(newState);
     }
 
     pollingInterval.current = window.setInterval(() => {
@@ -73,10 +53,10 @@ const Index = () => {
   }, [searchParams]);
 
   const handleMove = (index: number) => {
-    if (gameState.currentPlayer !== "X") {
+    if (gameState.currentPlayer !== "O") {
       toast({
         title: "Not your turn",
-        description: "Please wait for Player 2 to make their move.",
+        description: "Please wait for Player 1 to make their move.",
         variant: "destructive",
       });
       return;
@@ -92,39 +72,15 @@ const Index = () => {
 
     const newGameState: GameState = {
       board: newBoard,
-      currentPlayer: "O",
+      currentPlayer: "X",
       status: winner ? "won" : isDraw ? "draw" : "playing",
       winner: winner,
     };
 
     setGameState(newGameState);
-    setSearchParams({ game: encodeGameState(newGameState), gameNumber });
-    lastGameData.current = encodeGameState(newGameState);
-  };
-
-  const handleNewGame = () => {
-    const newGameNumber = generateGameId();
-    const newGameState = getInitialGameState();
-    setGameState(newGameState);
-    setGameNumber(newGameNumber);
-    const encodedState = encodeGameState(newGameState);
-    setSearchParams({ game: encodedState, gameNumber: newGameNumber });
-    lastGameData.current = encodedState;
-
-    toast({
-      title: "New Game Started",
-      description: "Share the new game link with your opponent!",
-    });
-  };
-
-  const handleShare = () => {
-    const baseUrl = window.location.origin;
-    const sharedUrl = `${baseUrl}/shared?${searchParams.toString()}`;
-    navigator.clipboard.writeText(sharedUrl);
-    toast({
-      title: "Link Copied!",
-      description: "Share this link with your opponent to play together.",
-    });
+    const params = new URLSearchParams(searchParams);
+    params.set("game", encodeGameState(newGameState));
+    window.history.replaceState({}, "", `?${params.toString()}`);
   };
 
   return (
@@ -133,7 +89,7 @@ const Index = () => {
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold text-gray-800">Tic Tac Toe</h1>
           <p className="text-gray-600">Game #{gameNumber}</p>
-          <p className="text-purple-600 font-medium">You are Player 1 (X)</p>
+          <p className="text-purple-600 font-medium">You are Player 2 (O)</p>
           <p className="text-gray-700">
             {gameState.status === "playing" ? 
               `Current Turn: ${gameState.currentPlayer === "X" ? "Player 1 (X)" : "Player 2 (O)"}` :
@@ -144,13 +100,9 @@ const Index = () => {
           </p>
         </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
-        <div className="flex justify-center gap-4">
-          <Button onClick={handleNewGame}>New Game</Button>
-          <Button onClick={handleShare} variant="outline">Share Game</Button>
-        </div>
       </div>
     </div>
   );
 };
 
-export default Index;
+export default Shared;
