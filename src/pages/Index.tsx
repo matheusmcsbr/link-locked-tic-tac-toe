@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { GameState } from "@/types/game";
 import GameBoard from "@/components/GameBoard";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   getInitialGameState,
   checkWinner,
@@ -18,6 +18,7 @@ const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
   const [isFirstPlayer, setIsFirstPlayer] = useState(true);
+  const [gameNumber, setGameNumber] = useState<string>(generateGameId());
   const { toast } = useToast();
   const lastGameData = useRef<string | null>(null);
   const pollingInterval = useRef<number | null>(null);
@@ -25,23 +26,32 @@ const Index = () => {
   // Initial game state setup
   useEffect(() => {
     const gameData = searchParams.get("game");
+    const urlGameNumber = searchParams.get("gameNumber");
+    
     if (gameData) {
       try {
         const decodedState = decodeGameState(gameData);
         setGameState(decodedState);
         setIsFirstPlayer(false);
         lastGameData.current = gameData;
+        if (urlGameNumber) {
+          setGameNumber(urlGameNumber);
+        }
       } catch (error) {
         console.error("Failed to decode game state:", error);
+        const newGameNumber = generateGameId();
         const newState = getInitialGameState();
         setGameState(newState);
-        setSearchParams({ game: encodeGameState(newState) });
+        setGameNumber(newGameNumber);
+        setSearchParams({ game: encodeGameState(newState), gameNumber: newGameNumber });
         lastGameData.current = encodeGameState(newState);
       }
     } else {
+      const newGameNumber = generateGameId();
       const newState = getInitialGameState();
       setGameState(newState);
-      setSearchParams({ game: encodeGameState(newState) });
+      setGameNumber(newGameNumber);
+      setSearchParams({ game: encodeGameState(newState), gameNumber: newGameNumber });
       lastGameData.current = encodeGameState(newState);
     }
 
@@ -118,7 +128,7 @@ const Index = () => {
 
     setGameState(newGameState);
     const encodedState = encodeGameState(newGameState);
-    setSearchParams({ game: encodedState });
+    setSearchParams({ game: encodedState, gameNumber });
     lastGameData.current = encodedState;
   };
 
@@ -132,11 +142,14 @@ const Index = () => {
       return;
     }
     
+    const newGameNumber = generateGameId();
     const newGameState = getInitialGameState();
     setGameState(newGameState);
+    setGameNumber(newGameNumber);
     const encodedState = encodeGameState(newGameState);
     const newParams = new URLSearchParams();
     newParams.set('game', encodedState);
+    newParams.set('gameNumber', newGameNumber);
     setSearchParams(newParams);
     lastGameData.current = encodedState;
 
@@ -167,15 +180,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-lg w-full space-y-8">
-        <h1 className="text-3xl font-bold text-center text-gray-800">Tic Tac Toe</h1>
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold text-gray-800">Tic Tac Toe</h1>
+          <p className="text-gray-600">Game #{gameNumber}</p>
+          <p className="text-purple-600 font-medium">
+            You are Player {isFirstPlayer ? "1 (X)" : "2 (O)"}
+          </p>
+        </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
         <div className="flex justify-center gap-4">
-          {isFirstPlayer && (
-            <>
-              <Button onClick={handleNewGame}>New Game</Button>
-              <Button onClick={handleShare} variant="outline">Share Game</Button>
-            </>
-          )}
+          <Button onClick={handleNewGame}>New Game</Button>
+          <Button onClick={handleShare} variant="outline">Share Game</Button>
         </div>
       </div>
     </div>

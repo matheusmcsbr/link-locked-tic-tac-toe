@@ -1,4 +1,3 @@
-
 import { BoardState, Player, GameState } from "@/types/game";
 
 export const WINNING_COMBINATIONS = [
@@ -21,7 +20,7 @@ export function checkDraw(board: BoardState): boolean {
 }
 
 export function generateGameId(): string {
-  return Math.random().toString(36).substring(2, 9);
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
 export const getInitialGameState = (): GameState => ({
