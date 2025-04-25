@@ -20,11 +20,26 @@ const Index = () => {
   const [isFirstPlayer, setIsFirstPlayer] = useState(true);
   const { toast } = useToast();
 
+  // Load game state from URL if available
   useEffect(() => {
     const gameData = searchParams.get("game");
     if (gameData) {
-      setGameState(decodeGameState(gameData));
-      setIsFirstPlayer(false);
+      try {
+        const decodedState = decodeGameState(gameData);
+        setGameState(decodedState);
+        setIsFirstPlayer(false);
+      } catch (error) {
+        console.error("Failed to decode game state:", error);
+        // If there's an error decoding, start a fresh game
+        const newState = getInitialGameState();
+        setGameState(newState);
+        setSearchParams({ game: encodeGameState(newState) });
+      }
+    } else {
+      // No game in URL, initialize as first player with a fresh game
+      const newState = getInitialGameState();
+      setGameState(newState);
+      setSearchParams({ game: encodeGameState(newState) });
     }
   }, []);
 
