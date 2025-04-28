@@ -92,10 +92,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-slate-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-lg w-full space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-slate-800 font-serif">Tic Tac Toe</h1>
+          <h1 className="text-4xl font-bold text-slate-800 font-serif tracking-tight">Tic Tac Toe</h1>
           <ScoreDisplay scoreX={scoreX} scoreO={scoreO} />
           <p className="text-slate-700 text-lg font-medium">
             {gameState.status === "playing" ? 
@@ -107,10 +107,10 @@ const Index = () => {
           </p>
         </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-8">
           <Button 
             onClick={handleNewGame}
-            className="shadow-lg hover:shadow-xl transition-shadow"
+            className="shadow-lg hover:shadow-xl transition-all px-6 py-2 bg-amber-600 hover:bg-amber-700"
           >
             {scoreX >= 3 || scoreO >= 3 ? "New Match" : "New Game"}
           </Button>
