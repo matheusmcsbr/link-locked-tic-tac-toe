@@ -1,71 +1,63 @@
 
-import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { GameState } from "@/types/game";
 import GameBoard from "@/components/GameBoard";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import ScoreDisplay from "@/components/ScoreDisplay";
 import {
   getInitialGameState,
   checkWinner,
   checkDraw,
-  encodeGameState,
-  decodeGameState,
 } from "@/utils/gameUtils";
 
 const Index = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
+  const [scoreX, setScoreX] = useState(0);
+  const [scoreO, setScoreO] = useState(0);
   const { toast } = useToast();
-  const lastGameData = useRef<string | null>(null);
-  const pollingInterval = useRef<number | null>(null);
 
   useEffect(() => {
-    const gameData = searchParams.get("game");
-    
-    if (gameData) {
-      try {
-        const decodedState = decodeGameState(gameData);
-        setGameState(decodedState);
-        lastGameData.current = gameData;
-      } catch (error) {
-        console.error("Failed to decode game state:", error);
-        const newState = getInitialGameState();
-        setGameState(newState);
-        setSearchParams({ game: encodeGameState(newState) });
-        lastGameData.current = encodeGameState(newState);
+    if (gameState.status === "won") {
+      const winner = gameState.winner;
+      if (winner === "X") {
+        setScoreX(prev => {
+          const newScore = prev + 1;
+          if (newScore >= 3) {
+            toast({
+              title: "Game Over!",
+              description: "Player X wins the match!",
+            });
+          }
+          return newScore;
+        });
+      } else {
+        setScoreO(prev => {
+          const newScore = prev + 1;
+          if (newScore >= 3) {
+            toast({
+              title: "Game Over!",
+              description: "Player O wins the match!",
+            });
+          }
+          return newScore;
+        });
       }
-    } else {
-      const newState = getInitialGameState();
-      setGameState(newState);
-      setSearchParams({ game: encodeGameState(newState) });
-      lastGameData.current = encodeGameState(newState);
+      toast({
+        title: "Game Over!",
+        description: `Player ${gameState.winner} wins!`,
+      });
+    } else if (gameState.status === "draw") {
+      toast({
+        title: "Game Over!",
+        description: "It's a draw!",
+      });
     }
-
-    pollingInterval.current = window.setInterval(() => {
-      const currentParams = new URLSearchParams(window.location.search);
-      const currentGameData = currentParams.get("game");
-      
-      if (currentGameData && currentGameData !== lastGameData.current) {
-        try {
-          const decodedState = decodeGameState(currentGameData);
-          setGameState(decodedState);
-          lastGameData.current = currentGameData;
-        } catch (error) {
-          console.error("Failed to decode game state during polling:", error);
-        }
-      }
-    }, 1000);
-
-    return () => {
-      if (pollingInterval.current) {
-        clearInterval(pollingInterval.current);
-      }
-    };
-  }, [searchParams]);
+  }, [gameState.status, gameState.winner]);
 
   const handleMove = (index: number) => {
-    if (gameState.board[index] || gameState.status !== "playing") return;
+    if (gameState.board[index] || gameState.status !== "playing" || 
+        (scoreX >= 3 || scoreO >= 3)) return;
 
     const newBoard = [...gameState.board];
     newBoard[index] = gameState.currentPlayer;
@@ -81,17 +73,18 @@ const Index = () => {
     };
 
     setGameState(newGameState);
-    setSearchParams({ game: encodeGameState(newGameState) });
-    lastGameData.current = encodeGameState(newGameState);
   };
 
   const handleNewGame = () => {
-    const newGameState = getInitialGameState();
-    setGameState(newGameState);
-    const encodedState = encodeGameState(newGameState);
-    setSearchParams({ game: encodedState });
-    lastGameData.current = encodedState;
-
+    if (scoreX >= 3 || scoreO >= 3) {
+      setScoreX(0);
+      setScoreO(0);
+      toast({
+        title: "New Match Started",
+        description: "Scores have been reset for a new match!",
+      });
+    }
+    setGameState(getInitialGameState());
     toast({
       title: "New Game Started",
       description: "The board has been reset for a new game!",
@@ -103,6 +96,7 @@ const Index = () => {
       <div className="max-w-lg w-full space-y-8">
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold text-gray-800">Tic Tac Toe</h1>
+          <ScoreDisplay scoreX={scoreX} scoreO={scoreO} />
           <p className="text-gray-700 text-lg font-medium">
             {gameState.status === "playing" ? 
               `Current Turn: Player ${gameState.currentPlayer}` :
@@ -114,7 +108,9 @@ const Index = () => {
         </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
         <div className="flex justify-center">
-          <Button onClick={handleNewGame}>New Game</Button>
+          <Button onClick={handleNewGame}>
+            {scoreX >= 3 || scoreO >= 3 ? "New Match" : "New Game"}
+          </Button>
         </div>
       </div>
     </div>
