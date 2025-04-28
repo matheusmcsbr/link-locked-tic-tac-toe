@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { GameState } from "@/types/game";
 import GameBoard from "@/components/GameBoard";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import ScoreDisplay from "@/components/ScoreDisplay";
+import { RotateCcw } from "lucide-react";
 import {
   getInitialGameState,
   checkWinner,
@@ -91,6 +91,16 @@ const Index = () => {
     });
   };
 
+  const handleReset = () => {
+    setScoreX(0);
+    setScoreO(0);
+    setGameState(getInitialGameState());
+    toast({
+      title: "Game Reset",
+      description: "The scores have been reset and a new game has started!",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-slate-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-lg w-full space-y-8">
@@ -107,12 +117,20 @@ const Index = () => {
           </p>
         </div>
         <GameBoard gameState={gameState} onMove={handleMove} />
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center gap-4 mt-8">
           <Button 
             onClick={handleNewGame}
             className="shadow-lg hover:shadow-xl transition-all px-6 py-2 bg-amber-600 hover:bg-amber-700"
           >
             {scoreX >= 3 || scoreO >= 3 ? "New Match" : "New Game"}
+          </Button>
+          <Button
+            onClick={handleReset}
+            variant="outline"
+            className="shadow-lg hover:shadow-xl transition-all gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset All
           </Button>
         </div>
       </div>
